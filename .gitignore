@@ -1,4 +1,4 @@
-# Compiler files
+# Foundry compiler files
 cache/
 out/
 
@@ -9,3 +9,13 @@ out/
 
 # Dotenv file
 .env
+
+#Hardhat files
+artifacts/
+cache_hardhat/
+node_modules
+deployments/localhost/
+coverage
+coverage.json
+typechain
+typechain-types
