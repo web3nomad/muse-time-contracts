@@ -12,7 +12,7 @@ contract MuseTimeTest is Test {
 
     function setUp() public {
         museTime = new MuseTime();
-        museTimeController = new MuseTimeController(address(museTime), "");
+        museTimeController = new MuseTimeController(address(museTime), "test://");
         museTime.setController(address(museTimeController));
         hoax(EOA1, 10 ether);
     }
@@ -21,5 +21,13 @@ contract MuseTimeTest is Test {
         vm.prank(EOA1, EOA1);
         museTimeController.mint{value: 1 ether}();
         assertEq(museTime.ownerOf(1), EOA1);
+    }
+
+    function testTokenURI() public {
+        vm.prank(EOA1, EOA1);
+        museTimeController.mint{value: 1 ether}();
+        assertEq(museTime.tokenURI(1), "test://1");
+        // emit log(museTime.tokenURI(1));
+        vm.writeFile("./test/test.txt", museTime.tokenURI(1));
     }
 }
