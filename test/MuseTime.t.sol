@@ -3,18 +3,18 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "../src/MuseTime.sol";
-import "../src/MuseTimeController.sol";
+import "../src/MuseTimeSimpleController.sol";
 
 contract MuseTimeTest is Test {
     MuseTime public museTime;
-    MuseTimeController public museTimeController;
+    MuseTimeSimpleController public museTimeController;
     address constant EOA1 = address(uint160(uint256(keccak256('user account 1'))));
 
     function setUp() public {
         museTime = new MuseTime();
-        museTimeController = new MuseTimeController(address(museTime), "test://");
+        museTimeController = new MuseTimeSimpleController(address(museTime), "test://");
         museTime.setController(address(museTimeController));
-        hoax(EOA1, 10 ether);
+        vm.deal(EOA1, 10 ether);
     }
 
     function testMint() public {
@@ -28,6 +28,6 @@ contract MuseTimeTest is Test {
         museTimeController.mint{value: 1 ether}();
         assertEq(museTime.tokenURI(1), "test://1");
         // emit log(museTime.tokenURI(1));
-        vm.writeFile("./test/test.txt", museTime.tokenURI(1));
+        // vm.writeFile("./test/test.txt", museTime.tokenURI(1));
     }
 }

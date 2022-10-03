@@ -3,26 +3,56 @@ pragma solidity ^0.8.17;
 
 import "solmate/auth/Owned.sol";
 import "./interfaces/IERC20.sol";
+import "./libraries/SignatureVerification.sol";
 
 contract MuseTimeController is Owned {
 
     address public immutable museTimeNFT;
-    string public baseURI;
+    address public verificationAddress;
 
-    constructor(address museTimeNFT_, string memory baseURI_) Owned(msg.sender) {
+    string public baseURI;
+    uint256 public mintIndex;
+
+    mapping(uint256 => string) public slugs;
+
+    /* variables end */
+
+    constructor(
+        address museTimeNFT_,
+        string memory baseURI_,
+        address verificationAddress_
+    ) Owned(msg.sender) {
         museTimeNFT = museTimeNFT_;
         baseURI = baseURI_;
+        verificationAddress = verificationAddress_;
     }
 
     /**
      *  @dev mint logic
      */
 
-    uint256 public mintIndex;
+    function setVerificationAddress(address verificationAddress_) external onlyOwner {
+        verificationAddress = verificationAddress_;
+    }
 
-    function mint() external payable {
-        require(msg.value >= 1 ether, "INSUFFICIENT_VALUE");
-        IMuseTime(museTimeNFT).mint(msg.sender, ++mintIndex);
+    function mintWithSignature(
+        uint256 valueInWei,
+        address topicOwner,
+        string memory slug,
+        bytes memory signature
+    ) external payable {
+        require(valueInWei == msg.value, "Incorrect ether value");
+
+        SignatureVerification.requireValidSignature(
+            abi.encodePacked(msg.sender, valueInWei, topicOwner, slug, this),
+            signature,
+            verificationAddress
+        );
+
+        mintIndex += 1;
+        slugs[mintIndex] = slug;
+
+        IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
     }
 
     /**
@@ -34,28 +64,12 @@ contract MuseTimeController is Owned {
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _toString(tokenId))) : "";
-    }
-
-    function _toString(uint256 value) internal pure returns (string memory) {
-        // Inspired by OraclizeAPI's implementation - MIT licence
-        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
-        if (value == 0) {
-            return "0";
+        string memory slug = slugs[tokenId];
+        if (bytes(baseURI).length > 0 && bytes(slug).length > 0) {
+            return string(abi.encodePacked(baseURI, slug));
+        } else {
+            return "";
         }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
     }
 
     /**
