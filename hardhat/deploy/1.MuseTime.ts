@@ -8,7 +8,7 @@ const func: DeployFunction = async function({
   const { deploy } = deployments
   const { deployer } = await getNamedAccounts()
 
-  await deploy('Counter', {
+  await deploy('MuseTime', {
     from: deployer,
     log: true,
     args: [],
@@ -16,4 +16,4 @@ const func: DeployFunction = async function({
 };
 export default func;
 
-module.exports.tags = ['counter']
+module.exports.tags = ['nft']
