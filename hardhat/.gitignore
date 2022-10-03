@@ -1,0 +1,16 @@
+# Ignores development broadcast logs
+!/broadcast
+/broadcast/*/31337/
+/broadcast/**/dry-run/
+
+# Hardhat files
+artifacts/
+cache/
+deployments/localhost/
+coverage
+coverage.json
+typechain
+typechain-types
+
+# Foundry transformed contracts for hardhat
+contracts/

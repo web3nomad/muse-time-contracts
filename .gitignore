@@ -10,12 +10,5 @@ out/
 # Dotenv file
 .env
 
-#Hardhat files
-artifacts/
-cache_hardhat/
+# Hardhat
 node_modules
-deployments/localhost/
-coverage
-coverage.json
-typechain
-typechain-types

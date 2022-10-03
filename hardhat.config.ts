@@ -1,17 +1,8 @@
 import { HardhatUserConfig } from 'hardhat/config'
 import 'hardhat-deploy'
-import 'hardhat-preprocessor'
 import dotenv from 'dotenv'
 
 dotenv.config()
-
-function getRemappings() {
-  return fs
-    .readFileSync('remappings.txt', 'utf8')
-    .split('\n')
-    .filter(Boolean) // remove empty lines
-    .map((line) => line.trim().split('='))
-}
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -53,24 +44,14 @@ const config: HardhatUserConfig = {
       apiKey: process.env.ETHERSCAN_API_KEY,
     },
   },
-  preprocess: {
-    eachLine: (hre) => ({
-      transform: (line: string) => {
-        if (line.match(/^\s*import /i)) {
-          for (const [from, to] of getRemappings()) {
-            if (line.includes(from)) {
-              line = line.replace(from, to)
-              break
-            }
-          }
-        }
-        return line
-      },
-    }),
-  },
   paths: {
-    sources: './src',
-    cache: './cache_hardhat',
+    sources: './hardhat/contracts',
+    cache: './hardhat/cache',
+    artifacts: "./hardhat/artifacts",
+    test: "./hardhat/test",
+    deploy: './hardhat/deploy',
+    deployments: './hardhat/deployments',
+    imports: './hardhat/imports'
   },
 }
 

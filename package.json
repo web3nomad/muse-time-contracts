@@ -4,7 +4,7 @@
   "license": "MIT",
   "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preprocess": "hardhat preprocess --dest ./hardhat/contracts --config hardhat-preprocess.config.ts"
   },
   "author": "web3nomad.eth",
   "devDependencies": {
