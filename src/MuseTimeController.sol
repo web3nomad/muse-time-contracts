@@ -13,7 +13,17 @@ contract MuseTimeController is Owned {
     string public baseURI;
     uint256 public mintIndex;
 
-    mapping(uint256 => string) public slugs;
+    struct TimeTrove {
+        string addressAR;
+        uint256 balance;
+    }
+
+    mapping(address => TimeTrove) internal _timeTroves;
+
+    // tokenId to slug
+    mapping(uint256 => string) internal _topicSlugOf;
+    // tokenId to topic owner
+    mapping(uint256 => address) internal _topicOwnerOf;
 
     /* variables end */
 
@@ -28,6 +38,24 @@ contract MuseTimeController is Owned {
     }
 
     /**
+     *  @dev create TimeTrove
+     */
+
+    function initTimeTrove(string memory addressAR, bytes memory signature) external {
+        SignatureVerification.requireValidSignature(
+            abi.encodePacked(msg.sender, addressAR, this),
+            signature,
+            verificationAddress
+        );
+        TimeTrove memory timeTrove = TimeTrove(addressAR, 0);
+        _timeTroves[msg.sender] = timeTrove;
+    }
+
+    function timeTroveOf(address topicOwner) external view returns (TimeTrove memory) {
+        return _timeTroves[topicOwner];
+    }
+
+    /**
      *  @dev mint logic
      */
 
@@ -35,23 +63,20 @@ contract MuseTimeController is Owned {
         verificationAddress = verificationAddress_;
     }
 
-    function mintWithSignature(
+    function mint(
         uint256 valueInWei,
         address topicOwner,
-        string memory slug,
+        string memory topicSlug,
         bytes memory signature
     ) external payable {
         require(valueInWei == msg.value, "Incorrect ether value");
-
         SignatureVerification.requireValidSignature(
-            abi.encodePacked(msg.sender, valueInWei, topicOwner, slug, this),
+            abi.encodePacked(msg.sender, valueInWei, topicOwner, topicSlug, this),
             signature,
             verificationAddress
         );
-
         mintIndex += 1;
-        slugs[mintIndex] = slug;
-
+        _topicSlugOf[mintIndex] = topicSlug;
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
     }
 
@@ -64,7 +89,7 @@ contract MuseTimeController is Owned {
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
-        string memory slug = slugs[tokenId];
+        string memory slug = _topicSlugOf[tokenId];
         if (bytes(baseURI).length > 0 && bytes(slug).length > 0) {
             return string(abi.encodePacked(baseURI, slug));
         } else {

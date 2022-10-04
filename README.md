@@ -42,4 +42,4 @@ Above is the source code of this logic, seems it use a `cacheBreaker` hash to re
 2. change `paths.sources` to `./hardhat/contracts` in `hardhat.config.ts`
 3. run `npx hardhat preprocess --dest ./hardhat/contracts --config hardhat-preprocess.config.ts` to generate contracts for hardhat and save them to `contracts` folder.
 
-`npm run preprocess` should be run before `npx hardhat compile`, so hardhat can read the clean transformd contracts.
+`npm run remap` should be run before `npx hardhat compile`, so hardhat can read the clean transformd contracts.

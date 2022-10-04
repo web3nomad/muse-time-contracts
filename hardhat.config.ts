@@ -38,6 +38,9 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0,
     },
+    verificationAddress: {
+      31337: 0,
+    },
   },
   verify: {
     etherscan: {

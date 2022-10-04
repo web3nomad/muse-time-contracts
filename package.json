@@ -4,7 +4,7 @@
   "license": "MIT",
   "description": "",
   "scripts": {
-    "preprocess": "rm -rf hardhat/contracts && hardhat preprocess --dest ./hardhat/contracts --config hardhat-preprocess.config.ts"
+    "remap": "rm -rf hardhat/contracts && hardhat preprocess --dest ./hardhat/contracts --config hardhat-preprocess.config.ts"
   },
   "author": "web3nomad.eth",
   "devDependencies": {

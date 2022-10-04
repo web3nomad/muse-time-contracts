@@ -7,14 +7,8 @@ const func: DeployFunction = async function({
 }: HardhatRuntimeEnvironment) {
   const { deploy } = deployments
   const { deployer } = await getNamedAccounts()
-
-  await deploy('MuseTime', {
-    from: deployer,
-    log: true,
-    args: [],
-  })
 }
 
 export default func
 
-export const tags = ['nft']
+export const tags = ['connect']

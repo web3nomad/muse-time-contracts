@@ -6,15 +6,21 @@ const func: DeployFunction = async function({
   deployments,
 }: HardhatRuntimeEnvironment) {
   const { deploy } = deployments
-  const { deployer } = await getNamedAccounts()
+  const { deployer, verificationAddress } = await getNamedAccounts()
 
-  await deploy('MuseTime', {
+  const MuseTime = await deployments.get('MuseTime');
+
+  await deploy('MuseTimeController', {
     from: deployer,
     log: true,
-    args: [],
+    args: [
+      MuseTime.address,
+      'https://arseed.web3infra.dev/',
+      verificationAddress
+    ],
   })
 }
 
 export default func
 
-export const tags = ['nft']
+export const tags = ['controller']
