@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "solmate/auth/Owned.sol";
+import "solmate/utils/LibString.sol";
 import "./interfaces/IERC20.sol";
 import "./libraries/SignatureVerification.sol";
 
@@ -27,6 +28,10 @@ contract MuseTimeController is Owned {
 
     /* variables end */
 
+    event TimeTroveCreated(address indexed _topicOwner);
+
+    /* events end */
+
     constructor(
         address museTimeNFT_,
         string memory baseURI_,
@@ -41,7 +46,7 @@ contract MuseTimeController is Owned {
      *  @dev create TimeTrove
      */
 
-    function initTimeTrove(string memory addressAR, bytes memory signature) external {
+    function createTimeTrove(string memory addressAR, bytes memory signature) external {
         SignatureVerification.requireValidSignature(
             abi.encodePacked(msg.sender, addressAR, this),
             signature,
@@ -49,6 +54,7 @@ contract MuseTimeController is Owned {
         );
         TimeTrove memory timeTrove = TimeTrove(addressAR, 0);
         _timeTroves[msg.sender] = timeTrove;
+        emit TimeTroveCreated(msg.sender);
     }
 
     function timeTroveOf(address topicOwner) external view returns (TimeTrove memory) {
@@ -91,7 +97,7 @@ contract MuseTimeController is Owned {
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         string memory slug = _topicSlugOf[tokenId];
         if (bytes(baseURI).length > 0 && bytes(slug).length > 0) {
-            return string(abi.encodePacked(baseURI, slug));
+            return string(abi.encodePacked(baseURI, LibString.toString(tokenId), slug));
         } else {
             return "";
         }

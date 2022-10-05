@@ -15,7 +15,7 @@ const func: DeployFunction = async function({
     log: true,
     args: [
       MuseTime.address,
-      'https://arseed.web3infra.dev/',
+      'https://musetime.xyz/~/',
       verificationAddress
     ],
   })

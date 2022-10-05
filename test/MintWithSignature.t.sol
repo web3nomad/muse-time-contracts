@@ -12,7 +12,7 @@ contract MuseTimeTest is Test {
     MuseTime public museTime;
     MuseTimeController public museTimeController;
 
-    string constant BASE_URI = "https://arseed.web3infra.dev/";
+    string constant BASE_URI = "https://musetime.xyz/~/";
     uint256 constant VERIFICATION_PRIVATE_KEY = uint256(keccak256('verification'));
     address constant EOA_SELLER = address(uint160(uint256(keccak256('user account 1'))));
     address constant EOA_BUYER = address(uint160(uint256(keccak256('user account 2'))));
@@ -31,7 +31,7 @@ contract MuseTimeTest is Test {
     function testMintWithSignatureSuccess() public {
         uint256 valueInWei = 0.1 ether;
         address topicOwner = EOA_SELLER;
-        string memory slug = "m5judnbyNBVKvv3QGfizA9295fLw1lq2MNU3B01NBSw";
+        string memory slug = "/NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5/_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c";
 
         bytes memory data = abi.encodePacked(
             EOA_BUYER, valueInWei, topicOwner, slug, address(museTimeController));
@@ -40,7 +40,7 @@ contract MuseTimeTest is Test {
         vm.deal(EOA_BUYER, 1 ether);
         vm.prank(EOA_BUYER, EOA_BUYER);
         museTimeController.mint{value:valueInWei}(valueInWei, topicOwner, slug, signature);
-        assertEq(museTime.tokenURI(1), "https://arseed.web3infra.dev/m5judnbyNBVKvv3QGfizA9295fLw1lq2MNU3B01NBSw");
+        assertEq(museTime.tokenURI(1), "https://musetime.xyz/~/1/NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5/_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c");
         // emit log(museTime.tokenURI(1));
     }
 
