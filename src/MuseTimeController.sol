@@ -83,6 +83,7 @@ contract MuseTimeController is Owned {
         );
         mintIndex += 1;
         _topicSlugOf[mintIndex] = topicSlug;
+        _topicOwnerOf[mintIndex] = topicOwner;
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
     }
 
