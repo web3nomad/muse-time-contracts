@@ -31,15 +31,16 @@ contract MuseTimeTest is Test {
     function testMintWithSignatureSuccess() public {
         uint256 valueInWei = 0.1 ether;
         address topicOwner = EOA_SELLER;
-        string memory slug = "/NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5/_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c";
+        string memory slug = "NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5";
+        string memory arId = "_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c";
 
         bytes memory data = abi.encodePacked(
-            EOA_BUYER, valueInWei, topicOwner, slug, address(museTimeController));
+            EOA_BUYER, valueInWei, topicOwner, slug, arId, address(museTimeController));
         bytes memory signature = _sign(data);
 
         vm.deal(EOA_BUYER, 1 ether);
         vm.prank(EOA_BUYER, EOA_BUYER);
-        museTimeController.mintTimeToken{value:valueInWei}(valueInWei, topicOwner, slug, signature);
+        museTimeController.mintTimeToken{value:valueInWei}(valueInWei, topicOwner, slug, arId, signature);
         assertEq(museTime.tokenURI(1), "https://musetime.xyz/~/1/NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5/_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c");
         // emit log(museTime.tokenURI(1));
     }

@@ -24,6 +24,7 @@ contract MuseTimeController is Owned {
         uint256 valueInWei;
         address topicOwner;
         string topicSlug;
+        string arId;
         TimeTokenStatus status;
     }
 
@@ -80,17 +81,18 @@ contract MuseTimeController is Owned {
         uint256 valueInWei,
         address topicOwner,
         string memory topicSlug,
+        string memory arId,
         bytes memory signature
     ) external payable {
         require(valueInWei == msg.value, "Incorrect ether value");
         SignatureVerification.requireValidSignature(
-            abi.encodePacked(msg.sender, valueInWei, topicOwner, topicSlug, this),
+            abi.encodePacked(msg.sender, valueInWei, topicOwner, topicSlug, arId, this),
             signature,
             verificationAddress
         );
         mintIndex += 1;
         TimeToken memory timeToken = TimeToken(
-            valueInWei, topicOwner, topicSlug, TimeTokenStatus.PENDING);
+            valueInWei, topicOwner, topicSlug, arId, TimeTokenStatus.PENDING);
         _timeTokens[mintIndex] = timeToken;
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
     }
@@ -105,9 +107,15 @@ contract MuseTimeController is Owned {
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         TimeToken memory timeToken = _timeTokens[tokenId];
-        string memory slug = timeToken.topicSlug;
-        if (bytes(baseURI).length > 0 && bytes(slug).length > 0) {
-            return string(abi.encodePacked(baseURI, LibString.toString(tokenId), slug));
+        if (bytes(baseURI).length > 0 && bytes(timeToken.topicSlug).length > 0) {
+            string memory suffix = string(abi.encodePacked(
+                LibString.toString(tokenId),
+                "/",
+                timeToken.topicSlug,
+                "/",
+                timeToken.arId
+            ));
+            return string(abi.encodePacked(baseURI, suffix));
         } else {
             return "";
         }
