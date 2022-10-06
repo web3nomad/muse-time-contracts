@@ -40,7 +40,10 @@ contract MuseTimeController is Owned {
 
     /* variables end */
 
-    event TimeTroveCreated(address indexed _topicOwner);
+    event TimeTroveCreated(address indexed topicOwner);
+    event TimeTokenMinted(
+        address indexed topicOwner, string indexed topicSlug, address indexed tokenOwner,
+        uint256 tokenId);
 
     /* events end */
 
@@ -95,6 +98,7 @@ contract MuseTimeController is Owned {
             valueInWei, topicOwner, topicSlug, arId, TimeTokenStatus.PENDING);
         _timeTokens[mintIndex] = timeToken;
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
+        emit TimeTokenMinted(topicOwner, topicSlug, msg.sender, mintIndex);
     }
 
     function timeTokenOf(uint256 tokenId) external view returns (TimeToken memory) {
