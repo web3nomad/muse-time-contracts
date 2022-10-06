@@ -8,23 +8,34 @@ import "./libraries/SignatureVerification.sol";
 
 contract MuseTimeController is Owned {
 
+    struct TimeTrove {
+        string arOwnerAddress;
+        uint256 balance;
+    }
+
+    enum TimeTokenStatus {
+        PENDING,
+        REJECTED,
+        CONFIRMED,
+        FULFILLED
+    }
+
+    struct TimeToken {
+        uint256 valueInWei;
+        address topicOwner;
+        string topicSlug;
+        TimeTokenStatus status;
+    }
+
     address public immutable museTimeNFT;
     address public verificationAddress;
 
     string public baseURI;
     uint256 public mintIndex;
 
-    struct TimeTrove {
-        string addressAR;
-        uint256 balance;
-    }
-
     mapping(address => TimeTrove) internal _timeTroves;
 
-    // tokenId to slug
-    mapping(uint256 => string) internal _topicSlugOf;
-    // tokenId to topic owner
-    mapping(uint256 => address) internal _topicOwnerOf;
+    mapping(uint256 => TimeToken) internal _timeTokens;
 
     /* variables end */
 
@@ -43,16 +54,16 @@ contract MuseTimeController is Owned {
     }
 
     /**
-     *  @dev create TimeTrove
+     *  @dev TimeTrove
      */
 
-    function createTimeTrove(string memory addressAR, bytes memory signature) external {
+    function createTimeTrove(string memory arOwnerAddress, bytes memory signature) external {
         SignatureVerification.requireValidSignature(
-            abi.encodePacked(msg.sender, addressAR, this),
+            abi.encodePacked(msg.sender, arOwnerAddress, this),
             signature,
             verificationAddress
         );
-        TimeTrove memory timeTrove = TimeTrove(addressAR, 0);
+        TimeTrove memory timeTrove = TimeTrove(arOwnerAddress, 0);
         _timeTroves[msg.sender] = timeTrove;
         emit TimeTroveCreated(msg.sender);
     }
@@ -62,14 +73,10 @@ contract MuseTimeController is Owned {
     }
 
     /**
-     *  @dev mint logic
+     *  @dev TimeToken
      */
 
-    function setVerificationAddress(address verificationAddress_) external onlyOwner {
-        verificationAddress = verificationAddress_;
-    }
-
-    function mint(
+    function mintTimeToken(
         uint256 valueInWei,
         address topicOwner,
         string memory topicSlug,
@@ -82,21 +89,23 @@ contract MuseTimeController is Owned {
             verificationAddress
         );
         mintIndex += 1;
-        _topicSlugOf[mintIndex] = topicSlug;
-        _topicOwnerOf[mintIndex] = topicOwner;
+        TimeToken memory timeToken = TimeToken(
+            valueInWei, topicOwner, topicSlug, TimeTokenStatus.PENDING);
+        _timeTokens[mintIndex] = timeToken;
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
     }
 
-    /**
-     *  @dev render logic
-     */
-
-    function setBaseURI(string memory baseURI_) external onlyOwner {
-        baseURI = baseURI_;
+    function timeTokenOf(uint256 tokenId) external view returns (TimeToken memory) {
+        return _timeTokens[tokenId];
     }
 
+    /**
+     *  @dev Render
+     */
+
     function tokenURI(uint256 tokenId) external view returns (string memory) {
-        string memory slug = _topicSlugOf[tokenId];
+        TimeToken memory timeToken = _timeTokens[tokenId];
+        string memory slug = timeToken.topicSlug;
         if (bytes(baseURI).length > 0 && bytes(slug).length > 0) {
             return string(abi.encodePacked(baseURI, LibString.toString(tokenId), slug));
         } else {
@@ -105,7 +114,7 @@ contract MuseTimeController is Owned {
     }
 
     /**
-     * @dev Receive and withdraw assets
+     * @dev Controller owner actions
      */
 
     receive() external payable {}
@@ -118,6 +127,15 @@ contract MuseTimeController is Owned {
     function withdrawERC20(IERC20 token) external onlyOwner {
         uint256 balance = token.balanceOf(address(this));
         token.transfer(msg.sender, balance);
+    }
+
+
+    function setVerificationAddress(address verificationAddress_) external onlyOwner {
+        verificationAddress = verificationAddress_;
+    }
+
+    function setBaseURI(string memory baseURI_) external onlyOwner {
+        baseURI = baseURI_;
     }
 
 }

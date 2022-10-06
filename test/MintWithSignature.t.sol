@@ -39,7 +39,7 @@ contract MuseTimeTest is Test {
 
         vm.deal(EOA_BUYER, 1 ether);
         vm.prank(EOA_BUYER, EOA_BUYER);
-        museTimeController.mint{value:valueInWei}(valueInWei, topicOwner, slug, signature);
+        museTimeController.mintTimeToken{value:valueInWei}(valueInWei, topicOwner, slug, signature);
         assertEq(museTime.tokenURI(1), "https://musetime.xyz/~/1/NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5/_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c");
         // emit log(museTime.tokenURI(1));
     }
