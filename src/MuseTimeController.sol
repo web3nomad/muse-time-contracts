@@ -105,6 +105,42 @@ contract MuseTimeController is Owned {
         return _timeTokens[tokenId];
     }
 
+    function setConfirmed(uint256 tokenId) external {
+        IMuseTime(museTimeNFT).ownerOf(tokenId);  // get owner first to ensure token exists
+        TimeToken memory timeToken = _timeTokens[tokenId];
+        // require(timeToken.topicOwner != address(0));  // since token exists, this is not necessary
+        require(msg.sender == timeToken.topicOwner, "NOT_TOPIC_OWNER");
+        require(timeToken.status == TimeTokenStatus.PENDING, "WRONG_STATUS");
+        _timeTokens[tokenId].status = TimeTokenStatus.CONFIRMED;
+    }
+
+    function setRejected(uint256 tokenId) external {
+        address tokenOwner = IMuseTime(museTimeNFT).ownerOf(tokenId);
+        TimeToken memory timeToken = _timeTokens[tokenId];
+        require(msg.sender == timeToken.topicOwner, "NOT_TOPIC_OWNER");
+        require(timeToken.status == TimeTokenStatus.PENDING, "WRONG_STATUS");
+        _timeTokens[tokenId].status = TimeTokenStatus.REJECTED;
+        // TODO: do refund
+        payable(tokenOwner).transfer(timeToken.valueInWei);
+    }
+
+    function setFulfilled(uint256 tokenId) external {
+        address tokenOwner = IMuseTime(museTimeNFT).ownerOf(tokenId);
+        TimeToken memory timeToken = _timeTokens[tokenId];
+        require(msg.sender == tokenOwner, "NOT_TOKEN_OWNER");
+        require(timeToken.status == TimeTokenStatus.CONFIRMED, "WRONG_STATUS");
+        _timeTokens[tokenId].status = TimeTokenStatus.FULFILLED;
+        // TODO: do balance change
+        _timeTroves[timeToken.topicOwner].balance += timeToken.valueInWei;
+    }
+
+    function withdrawFromTimeTrove() external {
+        TimeTrove memory timeTrove = _timeTroves[msg.sender];
+        require(timeTrove.balance > 0, "NO_BALANCE");
+        _timeTroves[msg.sender].balance = 0;
+        payable(msg.sender).transfer(timeTrove.balance);
+    }
+
     /**
      *  @dev Render
      */
@@ -154,4 +190,5 @@ contract MuseTimeController is Owned {
 
 interface IMuseTime {
     function mint(address to, uint256 tokenId) external;
+    function ownerOf(uint256 id) external view returns (address owner);
 }
