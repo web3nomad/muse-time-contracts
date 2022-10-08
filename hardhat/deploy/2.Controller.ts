@@ -13,11 +13,19 @@ const func: DeployFunction = async function({
   await deploy('MuseTimeController', {
     from: deployer,
     log: true,
-    args: [
-      MuseTime.address,
-      'https://musetime.xyz/~/',
-      verificationAddress
-    ],
+    proxy: {
+      proxyContract: 'OpenZeppelinTransparentProxy',
+      execute: {
+        init: {
+          methodName: 'initialize',
+          args: [
+            MuseTime.address,
+            'https://musetime.xyz/~/',
+            verificationAddress,
+          ]
+        }
+      }
+    }
   })
 }
 

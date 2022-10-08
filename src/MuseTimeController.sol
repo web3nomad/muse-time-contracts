@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "solmate/auth/Owned.sol";
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "solmate/utils/LibString.sol";
 import "./interfaces/IERC20.sol";
 import "./libraries/SignatureVerification.sol";
 
-contract MuseTimeController is Owned {
+contract MuseTimeController is OwnableUpgradeable {
 
     struct TimeTrove {
         string arOwnerAddress;
@@ -28,7 +28,7 @@ contract MuseTimeController is Owned {
         TimeTokenStatus status;
     }
 
-    address public immutable museTimeNFT;
+    address public museTimeNFT;
     address public verificationAddress;
 
     string public baseURI;
@@ -47,11 +47,12 @@ contract MuseTimeController is Owned {
 
     /* events end */
 
-    constructor(
+    function initialize(
         address museTimeNFT_,
         string memory baseURI_,
         address verificationAddress_
-    ) Owned(msg.sender) {
+    ) initializer public {
+        __Ownable_init();
         museTimeNFT = museTimeNFT_;
         baseURI = baseURI_;
         verificationAddress = verificationAddress_;

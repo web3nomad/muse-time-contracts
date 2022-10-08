@@ -20,7 +20,8 @@ contract MuseTimeTest is Test {
     function setUp() public {
         address verificationAddress = vm.addr(VERIFICATION_PRIVATE_KEY);
         museTime = new MuseTime();
-        museTimeController = new MuseTimeController(
+        museTimeController = new MuseTimeController();
+        museTimeController.initialize(
             address(museTime),
             BASE_URI,
             verificationAddress
