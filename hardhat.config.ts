@@ -4,6 +4,7 @@ import 'hardhat-deploy'
 import dotenv from 'dotenv'
 
 dotenv.config()
+const NULL_PRIVATE_KEY = '0x000000000000000000000000000000000000000000000000000000000000DEAD'
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -34,13 +35,22 @@ const config: HardhatUserConfig = {
     localhost: {
       url: 'http://127.0.0.1:8545',
     },
+    mumbai: {
+      url: 'https://rpc-mumbai.maticvigil.com',
+      // gasPrice: 30000000000,  // gwei
+      accounts: [
+        process.env.TESTNET_DEPLOYER_PRIVATEKEY || NULL_PRIVATE_KEY,
+        process.env.VERIFICATION_ADDRESS_PRIVATE_KEY || NULL_PRIVATE_KEY,
+      ],
+    },
   },
   namedAccounts: {
     deployer: {
       default: 0,
     },
     verificationAddress: {
-      31337: 0,
+      80001: 1,  // mumbai
+      31337: 0,  // localhost
     },
   },
   verify: {
