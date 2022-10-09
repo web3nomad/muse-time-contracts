@@ -24,7 +24,8 @@ contract MuseTimeController is OwnableUpgradeable {
         uint256 valueInWei;
         address topicOwner;
         string topicSlug;
-        string arId;
+        string profileArId;
+        string topicsArId;
         TimeTokenStatus status;
     }
 
@@ -34,9 +35,14 @@ contract MuseTimeController is OwnableUpgradeable {
     string public baseURI;
     uint256 public mintIndex;
 
-    mapping(address => TimeTrove) internal _timeTroves;
+    /**
+     * @dev Key(uint256) mapping to a claimed key.
+     * Used to prevent address from rebroadcasting mint transactions
+     */
+    mapping(uint256 => bool) private _claimedMintKeys;
 
-    mapping(uint256 => TimeToken) internal _timeTokens;
+    mapping(address => TimeTrove) private _timeTroves;
+    mapping(uint256 => TimeToken) private _timeTokens;
 
     /* variables end */
 
@@ -82,21 +88,25 @@ contract MuseTimeController is OwnableUpgradeable {
      */
 
     function mintTimeToken(
+        uint256 mintKey,
         uint256 valueInWei,
         address topicOwner,
         string memory topicSlug,
-        string memory arId,
+        string memory profileArId,
+        string memory topicsArId,
         bytes memory signature
     ) external payable {
+        require(_claimedMintKeys[mintKey] == false, "MINT_KEY_CLAIMED");
         require(valueInWei == msg.value, "Incorrect ether value");
         SignatureVerification.requireValidSignature(
-            abi.encodePacked(msg.sender, valueInWei, topicOwner, topicSlug, arId, this),
+            abi.encodePacked(msg.sender, mintKey, valueInWei, topicOwner, topicSlug, profileArId, topicsArId, this),
             signature,
             verificationAddress
         );
+        _claimedMintKeys[mintKey] = true;
         mintIndex += 1;
         TimeToken memory timeToken = TimeToken(
-            valueInWei, topicOwner, topicSlug, arId, TimeTokenStatus.PENDING);
+            valueInWei, topicOwner, topicSlug, profileArId, topicsArId, TimeTokenStatus.PENDING);
         _timeTokens[mintIndex] = timeToken;
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
         emit TimeTokenMinted(topicOwner, topicSlug, msg.sender, mintIndex);
@@ -154,7 +164,7 @@ contract MuseTimeController is OwnableUpgradeable {
                 "/",
                 timeToken.topicSlug,
                 "/",
-                timeToken.arId
+                timeToken.topicsArId
             ));
             return string(abi.encodePacked(baseURI, suffix));
         } else {
