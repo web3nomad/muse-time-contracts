@@ -131,7 +131,7 @@ contract MuseTimeController is OwnableUpgradeable {
         require(msg.sender == timeToken.topicOwner, "NOT_TOPIC_OWNER");
         require(timeToken.status == TimeTokenStatus.PENDING, "WRONG_STATUS");
         _timeTokens[tokenId].status = TimeTokenStatus.REJECTED;
-        // TODO: do refund
+        // do refund
         payable(tokenOwner).transfer(timeToken.valueInWei);
     }
 
@@ -141,15 +141,15 @@ contract MuseTimeController is OwnableUpgradeable {
         require(msg.sender == tokenOwner, "NOT_TOKEN_OWNER");
         require(timeToken.status == TimeTokenStatus.CONFIRMED, "WRONG_STATUS");
         _timeTokens[tokenId].status = TimeTokenStatus.FULFILLED;
-        // TODO: do balance change
+        // change balance
         _timeTroves[timeToken.topicOwner].balance += timeToken.valueInWei;
     }
 
     function withdrawFromTimeTrove() external {
-        TimeTrove memory timeTrove = _timeTroves[msg.sender];
-        require(timeTrove.balance > 0, "NO_BALANCE");
+        uint256 balance = _timeTroves[msg.sender].balance;
+        require(balance > 0, "NO_BALANCE");
         _timeTroves[msg.sender].balance = 0;
-        payable(msg.sender).transfer(timeTrove.balance);
+        payable(msg.sender).transfer(balance);
     }
 
     /**
