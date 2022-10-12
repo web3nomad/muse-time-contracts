@@ -9,16 +9,15 @@ library SignatureVerification {
     function requireValidSignature(
         bytes memory data,
         bytes memory signature,
-        address verificationAddress
+        address signerAddress
     ) internal pure {
         require(
-            verificationAddress != address(0),
+            signerAddress != address(0),
             "verification address not initialized"
         );
 
         require(
-            keccak256(data).toEthSignedMessageHash().recover(signature) ==
-                verificationAddress,
+            keccak256(data).toEthSignedMessageHash().recover(signature) == signerAddress,
             "signature invalid"
         );
     }

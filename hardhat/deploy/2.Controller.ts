@@ -6,7 +6,7 @@ const func: DeployFunction = async function({
   deployments,
 }: HardhatRuntimeEnvironment) {
   const { deploy } = deployments
-  const { deployer, verificationAddress } = await getNamedAccounts()
+  const { deployer, paramsSigner } = await getNamedAccounts()
 
   const MuseTime = await deployments.get('MuseTime');
 
@@ -21,7 +21,7 @@ const func: DeployFunction = async function({
           args: [
             MuseTime.address,
             'https://musetime.xyz/~/',
-            verificationAddress,
+            paramsSigner,
           ]
         }
       }

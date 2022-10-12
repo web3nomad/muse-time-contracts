@@ -30,7 +30,7 @@ contract MuseTimeController is OwnableUpgradeable {
     }
 
     address public museTimeNFT;
-    address public verificationAddress;
+    address public paramsSigner;
 
     string public baseURI;
     uint256 public mintIndex;
@@ -56,12 +56,12 @@ contract MuseTimeController is OwnableUpgradeable {
     function initialize(
         address museTimeNFT_,
         string memory baseURI_,
-        address verificationAddress_
+        address paramsSigner_
     ) initializer public {
         __Ownable_init();
         museTimeNFT = museTimeNFT_;
         baseURI = baseURI_;
-        verificationAddress = verificationAddress_;
+        paramsSigner = paramsSigner_;
     }
 
     /**
@@ -72,7 +72,7 @@ contract MuseTimeController is OwnableUpgradeable {
         SignatureVerification.requireValidSignature(
             abi.encodePacked(msg.sender, arOwnerAddress, this),
             signature,
-            verificationAddress
+            paramsSigner
         );
         TimeTrove memory timeTrove = TimeTrove(arOwnerAddress, 0);
         _timeTroves[msg.sender] = timeTrove;
@@ -101,7 +101,7 @@ contract MuseTimeController is OwnableUpgradeable {
         SignatureVerification.requireValidSignature(
             abi.encodePacked(msg.sender, mintKey, valueInWei, topicOwner, topicSlug, profileArId, topicsArId, this),
             signature,
-            verificationAddress
+            paramsSigner
         );
         _claimedMintKeys[mintKey] = true;
         mintIndex += 1;
@@ -189,8 +189,8 @@ contract MuseTimeController is OwnableUpgradeable {
     }
 
 
-    function setVerificationAddress(address verificationAddress_) external onlyOwner {
-        verificationAddress = verificationAddress_;
+    function setParamsSigner(address paramsSigner_) external onlyOwner {
+        paramsSigner = paramsSigner_;
     }
 
     function setBaseURI(string memory baseURI_) external onlyOwner {

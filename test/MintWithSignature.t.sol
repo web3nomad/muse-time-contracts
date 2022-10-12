@@ -13,18 +13,18 @@ contract MuseTimeTest is Test {
     MuseTimeController public museTimeController;
 
     string constant BASE_URI = "https://musetime.xyz/~/";
-    uint256 constant VERIFICATION_PRIVATE_KEY = uint256(keccak256('verification'));
+    uint256 constant PARAMS_SIGNER_PRIVATE_KEY = uint256(keccak256('verification'));
     address constant EOA_SELLER = address(uint160(uint256(keccak256('user account 1'))));
     address constant EOA_BUYER = address(uint160(uint256(keccak256('user account 2'))));
 
     function setUp() public {
-        address verificationAddress = vm.addr(VERIFICATION_PRIVATE_KEY);
+        address paramsSigner = vm.addr(PARAMS_SIGNER_PRIVATE_KEY);
         museTime = new MuseTime();
         museTimeController = new MuseTimeController();
         museTimeController.initialize(
             address(museTime),
             BASE_URI,
-            verificationAddress
+            paramsSigner
         );
         museTime.setController(address(museTimeController));
     }
@@ -51,7 +51,7 @@ contract MuseTimeTest is Test {
 
     function _sign(bytes memory data) private returns (bytes memory signature) {
         bytes32 hash = keccak256(data).toEthSignedMessageHash();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFICATION_PRIVATE_KEY, hash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(PARAMS_SIGNER_PRIVATE_KEY, hash);
         signature = abi.encodePacked(r, s, v);
     }
 }
