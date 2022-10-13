@@ -40,7 +40,15 @@ const config: HardhatUserConfig = {
       // gasPrice: 30000000000,  // gwei
       accounts: [
         process.env.TESTNET_DEPLOYER_PRIVATEKEY || NULL_PRIVATE_KEY,
-        process.env.PARAMS_SIGNER_PRIVATE_KEY || NULL_PRIVATE_KEY,
+        process.env.TESTNET_PARAMS_SIGNER_PRIVATE_KEY || NULL_PRIVATE_KEY,
+      ],
+    },
+    mainnet: {
+      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      gasPrice: 12000000000,  // gwei
+      accounts: [
+        process.env.MAINNET_DEPLOYER_PRIVATEKEY || NULL_PRIVATE_KEY,
+        process.env.MAINNET_PARAMS_SIGNER_PRIVATE_KEY || NULL_PRIVATE_KEY,
       ],
     },
   },
@@ -49,7 +57,8 @@ const config: HardhatUserConfig = {
       default: 0,
     },
     paramsSigner: {
-      80001: 1,  // mumbai
+      1: 1,  // ethereum mainnet
+      80001: 1,  // polygon mumbai
       31337: 0,  // localhost
     },
   },
