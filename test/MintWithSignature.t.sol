@@ -33,19 +33,21 @@ contract MuseTimeTest is Test {
         uint256 mintKey = 1;
         uint256 valueInWei = 0.1 ether;
         address topicOwner = EOA_SELLER;
-        string memory topicSlug = "NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5";
-        string memory topicsArId = "_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c";
-        string memory profileArId = "Ubh2C3ygHLqMLoLLoq6gAImZUuEZvfoEq3EecFw56J8";
+        bytes32 topicId = 0xfed92c215725bcade15c079d387c8267cc806b58d7aec929a1071337c80887c7;
+        bytes32 topicsArId = 0xfed92c215725bcade15c079d387c8267cc806b58d7aec929a1071337c80887c7;
+        bytes32 profileArId = 0xfed92c215725bcade15c079d387c8267cc806b58d7aec929a1071337c80887c7;
 
         bytes memory data = abi.encodePacked(
-            EOA_BUYER, mintKey, valueInWei, topicOwner, topicSlug, profileArId, topicsArId, address(museTimeController));
+            address(museTimeController), EOA_BUYER,
+            mintKey, valueInWei, profileArId, topicsArId, topicId, topicOwner
+        );
         bytes memory signature = _sign(data);
 
         vm.deal(EOA_BUYER, 1 ether);
         vm.prank(EOA_BUYER, EOA_BUYER);
         museTimeController.mintTimeToken{value:valueInWei}(
-            mintKey, valueInWei, topicOwner, topicSlug, profileArId, topicsArId, signature);
-        assertEq(museTime.tokenURI(1), "https://musetime.xyz/~/1/NzViMWU2ZWItNTA0Yi00ZmFkLWFmNzQtOWQ5MmQ5/_tksIVclvK3hXAedOHyCZ8yAa1jXrskpoQcTN8gIh8c");
+            mintKey, valueInWei, profileArId, topicsArId, topicId, topicOwner, signature);
+        assertEq(museTime.tokenURI(1), "https://musetime.xyz/~/1");
         // emit log(museTime.tokenURI(1));
     }
 

@@ -9,7 +9,7 @@ import "./libraries/SignatureVerification.sol";
 contract MuseTimeController is OwnableUpgradeable {
 
     struct TimeTrove {
-        string arOwnerAddress;
+        bytes32 arOwnerAddress;
         uint256 balance;
     }
 
@@ -22,10 +22,10 @@ contract MuseTimeController is OwnableUpgradeable {
 
     struct TimeToken {
         uint256 valueInWei;
+        bytes32 profileArId;
+        bytes32 topicsArId;
+        bytes32 topicId;
         address topicOwner;
-        string topicSlug;
-        string profileArId;
-        string topicsArId;
         TimeTokenStatus status;
     }
 
@@ -40,6 +40,7 @@ contract MuseTimeController is OwnableUpgradeable {
      * Used to prevent address from rebroadcasting mint transactions
      */
     mapping(uint256 => bool) private _claimedMintKeys;
+    mapping(address => TimeTrove) private _timeTrovesLegacy;  // deprecated, but keep the storage slot
 
     mapping(address => TimeTrove) private _timeTroves;
     mapping(uint256 => TimeToken) private _timeTokens;
@@ -48,8 +49,8 @@ contract MuseTimeController is OwnableUpgradeable {
 
     event TimeTroveCreated(address indexed topicOwner);
     event TimeTokenMinted(
-        address indexed topicOwner, string indexed topicSlug, address indexed tokenOwner,
-        uint256 tokenId);
+        address indexed topicOwner, bytes32 indexed topicId,
+        address indexed tokenOwner, uint256 tokenId);
 
     /* events end */
 
@@ -68,14 +69,13 @@ contract MuseTimeController is OwnableUpgradeable {
      *  @dev TimeTrove
      */
 
-    function createTimeTrove(string memory arOwnerAddress, bytes memory signature) external {
+    function createTimeTrove(bytes32 arOwnerAddress, bytes memory signature) external {
         SignatureVerification.requireValidSignature(
-            abi.encodePacked(msg.sender, arOwnerAddress, this),
+            abi.encodePacked(this, msg.sender, arOwnerAddress),
             signature,
             paramsSigner
         );
-        TimeTrove memory timeTrove = TimeTrove(arOwnerAddress, 0);
-        _timeTroves[msg.sender] = timeTrove;
+        _timeTroves[msg.sender] = TimeTrove(arOwnerAddress, 0);
         emit TimeTroveCreated(msg.sender);
     }
 
@@ -90,26 +90,25 @@ contract MuseTimeController is OwnableUpgradeable {
     function mintTimeToken(
         uint256 mintKey,
         uint256 valueInWei,
+        bytes32 profileArId,
+        bytes32 topicsArId,
+        bytes32 topicId,
         address topicOwner,
-        string memory topicSlug,
-        string memory profileArId,
-        string memory topicsArId,
         bytes memory signature
     ) external payable {
         require(_claimedMintKeys[mintKey] == false, "MINT_KEY_CLAIMED");
         require(valueInWei == msg.value, "Incorrect ether value");
         SignatureVerification.requireValidSignature(
-            abi.encodePacked(msg.sender, mintKey, valueInWei, topicOwner, topicSlug, profileArId, topicsArId, this),
+            abi.encodePacked(this, msg.sender, mintKey, valueInWei, profileArId, topicsArId, topicId, topicOwner),
             signature,
             paramsSigner
         );
         _claimedMintKeys[mintKey] = true;
         mintIndex += 1;
-        TimeToken memory timeToken = TimeToken(
-            valueInWei, topicOwner, topicSlug, profileArId, topicsArId, TimeTokenStatus.PENDING);
-        _timeTokens[mintIndex] = timeToken;
+        _timeTokens[mintIndex] = TimeToken(
+            valueInWei, profileArId, topicsArId, topicId, topicOwner, TimeTokenStatus.PENDING);
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
-        emit TimeTokenMinted(topicOwner, topicSlug, msg.sender, mintIndex);
+        emit TimeTokenMinted(topicOwner, topicId, msg.sender, mintIndex);
     }
 
     function timeTokenOf(uint256 tokenId) external view returns (TimeToken memory) {
@@ -157,16 +156,10 @@ contract MuseTimeController is OwnableUpgradeable {
      */
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
+        // 只需要 tokenid 就行, timetoken/xxx/xxx 接口可以通过tokenid取到所有信息
         TimeToken memory timeToken = _timeTokens[tokenId];
-        if (bytes(baseURI).length > 0 && bytes(timeToken.topicSlug).length > 0) {
-            string memory suffix = string(abi.encodePacked(
-                LibString.toString(tokenId),
-                "/",
-                timeToken.topicSlug,
-                "/",
-                timeToken.topicsArId
-            ));
-            return string(abi.encodePacked(baseURI, suffix));
+        if (bytes(baseURI).length > 0 && timeToken.topicId > 0) {
+            return string(abi.encodePacked(baseURI, LibString.toString(tokenId)));
         } else {
             return "";
         }
