@@ -22,9 +22,6 @@ contract MuseTimeController is OwnableUpgradeable {
 
     struct TimeToken {
         uint256 valueInWei;
-        bytes32 profileArId;
-        bytes32 topicsArId;
-        bytes32 topicId;
         address topicOwner;
         TimeTokenStatus status;
     }
@@ -49,8 +46,8 @@ contract MuseTimeController is OwnableUpgradeable {
 
     event TimeTroveCreated(address indexed topicOwner);
     event TimeTokenMinted(
-        address indexed topicOwner, bytes32 indexed topicId,
-        address indexed tokenOwner, uint256 tokenId);
+        address indexed topicOwner, bytes32 indexed topicId, uint256 indexed tokenId,
+        address tokenOwner, bytes32 profileArId, bytes32 topicsArId);
 
     /* events end */
 
@@ -105,10 +102,11 @@ contract MuseTimeController is OwnableUpgradeable {
         );
         _claimedMintKeys[mintKey] = true;
         mintIndex += 1;
-        _timeTokens[mintIndex] = TimeToken(
-            valueInWei, profileArId, topicsArId, topicId, topicOwner, TimeTokenStatus.PENDING);
+        _timeTokens[mintIndex] = TimeToken(valueInWei, topicOwner, TimeTokenStatus.PENDING);
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
-        emit TimeTokenMinted(topicOwner, topicId, msg.sender, mintIndex);
+        emit TimeTokenMinted(
+            topicOwner, topicId, mintIndex,
+            msg.sender, profileArId, topicsArId);
     }
 
     function timeTokenOf(uint256 tokenId) external view returns (TimeToken memory) {
@@ -158,7 +156,7 @@ contract MuseTimeController is OwnableUpgradeable {
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         // 只需要 tokenid 就行, timetoken/xxx/xxx 接口可以通过tokenid取到所有信息
         TimeToken memory timeToken = _timeTokens[tokenId];
-        if (bytes(baseURI).length > 0 && timeToken.topicId > 0) {
+        if (bytes(baseURI).length > 0 && timeToken.topicOwner != address(0)) {
             return string(abi.encodePacked(baseURI, LibString.toString(tokenId)));
         } else {
             return "";

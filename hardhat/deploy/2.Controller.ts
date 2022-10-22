@@ -23,7 +23,11 @@ const func: DeployFunction = async function({
             'https://musetime.xyz/~/',
             paramsSigner,
           ]
-        }
+        },
+        // onUpgrade: {
+        //   methodName: '',
+        //   args: []
+        // }
       }
     }
   })
