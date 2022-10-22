@@ -15,6 +15,6 @@ const func: DeployFunction = async function({
   })
 }
 
-export default func
+func.tags = ['nft']
 
-export const tags = ['nft']
+export default func

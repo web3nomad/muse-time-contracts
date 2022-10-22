@@ -24,15 +24,11 @@ const func: DeployFunction = async function({
             paramsSigner,
           ]
         },
-        // onUpgrade: {
-        //   methodName: '',
-        //   args: []
-        // }
       }
     }
   })
 }
 
-export default func
+func.tags = ['controller']
 
-export const tags = ['controller']
+export default func

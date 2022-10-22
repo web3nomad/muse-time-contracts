@@ -29,6 +29,6 @@ const func: DeployFunction = async function({
 
 }
 
-export default func
-
 export const tags = ['connect']
+
+export default func

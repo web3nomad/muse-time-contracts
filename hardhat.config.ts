@@ -46,7 +46,7 @@ const config: HardhatUserConfig = {
     },
     mainnet: {
       url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      gasPrice: 12000000000,  // gwei
+      gasPrice: 10000000000,  // gwei
       accounts: [
         process.env.MAINNET_DEPLOYER_PRIVATEKEY || NULL_PRIVATE_KEY,
         process.env.MAINNET_PARAMS_SIGNER_PRIVATE_KEY || NULL_PRIVATE_KEY,

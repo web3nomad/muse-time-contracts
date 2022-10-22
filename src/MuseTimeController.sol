@@ -66,14 +66,26 @@ contract MuseTimeController is OwnableUpgradeable {
      *  @dev TimeTrove
      */
 
-    function createTimeTrove(bytes32 arOwnerAddress, bytes memory signature) external {
-        SignatureVerification.requireValidSignature(
-            abi.encodePacked(this, msg.sender, arOwnerAddress),
-            signature,
-            paramsSigner
-        );
-        _timeTroves[msg.sender] = TimeTrove(arOwnerAddress, 0);
-        emit TimeTroveCreated(msg.sender);
+    struct CreateTimeTroveParams {
+        bytes32 arOwnerAddress;
+        address topicOwner;
+        bytes signature;
+    }
+
+    function createTimeTroves(CreateTimeTroveParams[] memory params) external {
+        for (uint256 i=0; i<params.length; ++i) {
+            bytes32 arOwnerAddress = params[i].arOwnerAddress;
+            address topicOwner = params[i].topicOwner;
+            bytes memory signature = params[i].signature;
+            require(_timeTroves[topicOwner].arOwnerAddress == 0, 'TIME_TROVE_EXISTS');
+            SignatureVerification.requireValidSignature(
+                abi.encodePacked(this, topicOwner, arOwnerAddress),
+                signature,
+                paramsSigner
+            );
+            _timeTroves[topicOwner] = TimeTrove(arOwnerAddress, 0);
+            emit TimeTroveCreated(topicOwner);
+        }
     }
 
     function timeTroveOf(address topicOwner) external view returns (TimeTrove memory) {
@@ -93,8 +105,8 @@ contract MuseTimeController is OwnableUpgradeable {
         address topicOwner,
         bytes memory signature
     ) external payable {
-        require(block.number <= expired, "Expired");
-        require(valueInWei == msg.value, "Incorrect ether value");
+        require(block.number <= expired, "EXPIRED");
+        require(valueInWei == msg.value, "INCORRECT_ETHER_VALUE");
         SignatureVerification.requireValidSignature(
             abi.encodePacked(this, msg.sender, expired, valueInWei, profileArId, topicsArId, topicId, topicOwner),
             signature,
@@ -153,9 +165,7 @@ contract MuseTimeController is OwnableUpgradeable {
      */
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
-        // 只需要 tokenid 就行, timetoken/xxx/xxx 接口可以通过tokenid取到所有信息
-        TimeToken memory timeToken = _timeTokens[tokenId];
-        if (bytes(baseURI).length > 0 && timeToken.topicOwner != address(0)) {
+        if (bytes(baseURI).length > 0) {
             return string(abi.encodePacked(baseURI, LibString.toString(tokenId)));
         } else {
             return "";
