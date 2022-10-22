@@ -36,7 +36,7 @@ contract MuseTimeController is OwnableUpgradeable {
      * @dev Key(uint256) mapping to a claimed key.
      * Used to prevent address from rebroadcasting mint transactions
      */
-    mapping(uint256 => bool) private _claimedMintKeys;
+    mapping(uint256 => bool) private _claimedMintKeysLegacy;  // deprecated, but keep the storage slot
     mapping(address => TimeTrove) private _timeTrovesLegacy;  // deprecated, but keep the storage slot
 
     mapping(address => TimeTrove) private _timeTroves;
@@ -85,7 +85,7 @@ contract MuseTimeController is OwnableUpgradeable {
      */
 
     function mintTimeToken(
-        uint256 mintKey,
+        uint256 expired,
         uint256 valueInWei,
         bytes32 profileArId,
         bytes32 topicsArId,
@@ -93,14 +93,13 @@ contract MuseTimeController is OwnableUpgradeable {
         address topicOwner,
         bytes memory signature
     ) external payable {
-        require(_claimedMintKeys[mintKey] == false, "MINT_KEY_CLAIMED");
+        require(block.number <= expired, "Expired");
         require(valueInWei == msg.value, "Incorrect ether value");
         SignatureVerification.requireValidSignature(
-            abi.encodePacked(this, msg.sender, mintKey, valueInWei, profileArId, topicsArId, topicId, topicOwner),
+            abi.encodePacked(this, msg.sender, expired, valueInWei, profileArId, topicsArId, topicId, topicOwner),
             signature,
             paramsSigner
         );
-        _claimedMintKeys[mintKey] = true;
         mintIndex += 1;
         _timeTokens[mintIndex] = TimeToken(valueInWei, topicOwner, TimeTokenStatus.PENDING);
         IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);

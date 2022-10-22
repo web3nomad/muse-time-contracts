@@ -24,6 +24,7 @@ const config: HardhatUserConfig = {
       chainId: 31337,
       forking: {
         url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+        blockNumber: 15801000
       },
       initialBaseFeePerGas: 10000000000,
       accounts: [{
