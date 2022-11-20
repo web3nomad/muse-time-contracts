@@ -17,7 +17,6 @@ contract MuseTimeController is OwnableUpgradeable {
         PENDING,
         REJECTED,
         CONFIRMED
-        // FULFILLED  // deprecated
     }
 
     struct TimeToken {
@@ -41,6 +40,8 @@ contract MuseTimeController is OwnableUpgradeable {
 
     mapping(address => TimeTrove) private _timeTroves;
     mapping(uint256 => TimeToken) private _timeTokens;
+
+    uint256 public feeDivisor;  // divisor 500: (1 / 500) == 0.2% | 2000000000000000 === (2 / 1000) * 1e18
 
     /* variables end */
 
@@ -158,8 +159,12 @@ contract MuseTimeController is OwnableUpgradeable {
     function withdrawFromTimeTrove() public {
         uint256 balance = _timeTroves[msg.sender].balance;
         require(balance > 0, "NO_BALANCE");
+        uint256 fee = 0;
+        if (feeDivisor >= 1) {
+            fee = balance / feeDivisor;
+        }
         _timeTroves[msg.sender].balance = 0;
-        payable(msg.sender).transfer(balance);
+        payable(msg.sender).transfer(balance - fee);
     }
 
     /**
@@ -190,6 +195,11 @@ contract MuseTimeController is OwnableUpgradeable {
         uint256 balance = token.balanceOf(address(this));
         require(amount <= balance, 'NO_ENOUGH_BALANCE');
         token.transfer(msg.sender, amount);
+    }
+
+    function setFeeDivisor(uint256 feeDivisor_) external onlyOwner {
+        require(feeDivisor_ >= 1 || feeDivisor_ == 0);
+        feeDivisor = feeDivisor_;
     }
 
     function setParamsSigner(address paramsSigner_) external onlyOwner {

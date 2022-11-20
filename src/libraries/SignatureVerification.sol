@@ -11,14 +11,10 @@ library SignatureVerification {
         bytes memory signature,
         address signerAddress
     ) internal pure {
-        require(
-            signerAddress != address(0),
-            "verification address not initialized"
-        );
-
+        require(signerAddress != address(0), "SIGNER_NOT_INITIALIZED");
         require(
             keccak256(data).toEthSignedMessageHash().recover(signature) == signerAddress,
-            "signature invalid"
+            "INVALID_SIGNATURE"
         );
     }
 }

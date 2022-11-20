@@ -54,7 +54,6 @@ contract MuseTimeTest is BaseTestSuite {
         assertEq(TOPIC_OWNER.balance, topic.valueInWei * 2);
     }
 
-
     function testConfirmAndWithdraw() public {
         uint256 expired = 3;
         vm.deal(TOPIC_OWNER, 0.01 ether);
@@ -76,6 +75,78 @@ contract MuseTimeTest is BaseTestSuite {
         // emit log_uint(TOPIC_OWNER.balance);
         assertEq(museTimeController.timeTroveOf(TOPIC_OWNER).balance, 0);
         assertEq(TOPIC_OWNER.balance, 0.01 ether + topic.valueInWei * 3);
+    }
+
+    function testReject() public {
+        uint256 expired = 3;
+        vm.deal(TOPIC_OWNER, 0);
+        vm.deal(EOA_BUYER_1, 1 ether);
+        vm.deal(EOA_BUYER_2, 1 ether);
+        _createTimeTrove(msg.sender, topic.topicOwner, arOwnerAddress);
+
+        uint256[] memory tokenIdsConfirm = new uint256[](2);
+        uint256[] memory tokenIdsReject = new uint256[](1);
+        tokenIdsConfirm[0] = _mintTimeToken(EOA_BUYER_1, expired, topic);
+        tokenIdsConfirm[1] = _mintTimeToken(EOA_BUYER_2, expired, topic);
+        tokenIdsReject[0] = _mintTimeToken(EOA_BUYER_2, expired, topic);
+        // contract balance is 0.03
+        assertEq(address(museTimeController).balance, topic.valueInWei * 3);
+        assertEq(EOA_BUYER_1.balance, 1 ether - topic.valueInWei);
+        assertEq(EOA_BUYER_2.balance, 1 ether - topic.valueInWei * 2);
+
+        vm.prank(TOPIC_OWNER, TOPIC_OWNER);
+        museTimeController.setConfirmed(tokenIdsConfirm, true);
+        assertEq(museTimeController.timeTroveOf(TOPIC_OWNER).balance, 0);
+        assertEq(TOPIC_OWNER.balance, topic.valueInWei * 2);
+        assertEq(address(museTimeController).balance, topic.valueInWei);
+        assertEq(EOA_BUYER_1.balance, 1 ether - topic.valueInWei);
+        assertEq(EOA_BUYER_2.balance, 1 ether - topic.valueInWei * 2);
+
+        vm.prank(TOPIC_OWNER, TOPIC_OWNER);
+        museTimeController.setRejected(tokenIdsReject);
+        assertEq(TOPIC_OWNER.balance, topic.valueInWei * 2);
+        assertEq(address(museTimeController).balance, 0);
+        assertEq(EOA_BUYER_1.balance, 1 ether - topic.valueInWei);
+        assertEq(EOA_BUYER_2.balance, 1 ether - topic.valueInWei);
+    }
+
+    function testWithdrawFee() public {
+        museTimeController.setFeeDivisor(100);
+
+        uint256 expired = 3;
+        vm.deal(TOPIC_OWNER, 0);
+        vm.deal(EOA_BUYER_1, 1 ether);
+        vm.deal(EOA_BUYER_2, 1 ether);
+        _createTimeTrove(msg.sender, topic.topicOwner, arOwnerAddress);
+
+        uint256[] memory tokenIds = new uint256[](3);
+        tokenIds[0] = _mintTimeToken(EOA_BUYER_1, expired, topic);
+        tokenIds[1] = _mintTimeToken(EOA_BUYER_2, expired, topic);
+        tokenIds[2] = _mintTimeToken(EOA_BUYER_2, expired, topic);
+
+        vm.prank(TOPIC_OWNER, TOPIC_OWNER);
+        museTimeController.setConfirmed(tokenIds, true);
+        assertEq(museTimeController.timeTroveOf(TOPIC_OWNER).balance, 0);
+        // fee is 1%, owner will get 99%
+        assertEq(TOPIC_OWNER.balance, topic.valueInWei * 3 * 99 / 100);
+    }
+
+    function testWithdrawNoFee() public {
+        museTimeController.setFeeDivisor(0);
+
+        uint256 expired = 1;
+        vm.deal(EOA_BUYER_1, 1 ether);
+        vm.deal(EOA_BUYER_2, 1 ether);
+        _createTimeTrove(msg.sender, topic.topicOwner, arOwnerAddress);
+
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = _mintTimeToken(EOA_BUYER_1, expired, topic);
+        tokenIds[1] = _mintTimeToken(EOA_BUYER_2, expired, topic);
+
+        vm.prank(TOPIC_OWNER, TOPIC_OWNER);
+        museTimeController.setConfirmed(tokenIds, true);
+        assertEq(museTimeController.timeTroveOf(TOPIC_OWNER).balance, 0);
+        assertEq(TOPIC_OWNER.balance, topic.valueInWei * 2);
     }
 
 }
