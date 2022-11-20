@@ -16,8 +16,8 @@ contract MuseTimeController is OwnableUpgradeable {
     enum TimeTokenStatus {
         PENDING,
         REJECTED,
-        CONFIRMED,
-        FULFILLED
+        CONFIRMED
+        // FULFILLED  // deprecated
     }
 
     struct TimeToken {
@@ -107,6 +107,7 @@ contract MuseTimeController is OwnableUpgradeable {
     ) external payable {
         require(block.number <= expired, "EXPIRED");
         require(valueInWei == msg.value, "INCORRECT_ETHER_VALUE");
+        require(_timeTroves[topicOwner].arOwnerAddress != 0, 'TIME_TROVE_NOT_EXIST');
         SignatureVerification.requireValidSignature(
             abi.encodePacked(this, msg.sender, expired, valueInWei, profileArId, topicsArId, topicId, topicOwner),
             signature,
@@ -124,36 +125,38 @@ contract MuseTimeController is OwnableUpgradeable {
         return _timeTokens[tokenId];
     }
 
-    function setConfirmed(uint256 tokenId) external {
-        IMuseTime(museTimeNFT).ownerOf(tokenId);  // get owner first to ensure token exists
-        TimeToken memory timeToken = _timeTokens[tokenId];
-        // require(timeToken.topicOwner != address(0));  // since token exists, this is not necessary
-        require(msg.sender == timeToken.topicOwner, "NOT_TOPIC_OWNER");
-        require(timeToken.status == TimeTokenStatus.PENDING, "WRONG_STATUS");
-        _timeTokens[tokenId].status = TimeTokenStatus.CONFIRMED;
+    function setConfirmed(uint256[] memory tokenIds, bool withdrawOnSuccess) external {
+        uint256 balance = _timeTroves[msg.sender].balance;
+        for (uint256 i=0; i<tokenIds.length; ++i) {
+            uint256 tokenId = tokenIds[i];
+            // IMuseTime(museTimeNFT).ownerOf(tokenId); // get owner first to ensure token exists, but it's not necessary since timeToken.topicOwner exists
+            TimeToken memory timeToken = _timeTokens[tokenId];
+            require(msg.sender == timeToken.topicOwner, "NOT_TOPIC_OWNER");
+            require(timeToken.status == TimeTokenStatus.PENDING, "WRONG_STATUS");
+            // update contract state
+            _timeTokens[tokenId].status = TimeTokenStatus.CONFIRMED;
+            balance += timeToken.valueInWei;
+        }
+        _timeTroves[msg.sender].balance = balance;
+        if (withdrawOnSuccess) {
+            withdrawFromTimeTrove();
+        }
     }
 
-    function setRejected(uint256 tokenId) external {
-        address tokenOwner = IMuseTime(museTimeNFT).ownerOf(tokenId);
-        TimeToken memory timeToken = _timeTokens[tokenId];
-        require(msg.sender == timeToken.topicOwner, "NOT_TOPIC_OWNER");
-        require(timeToken.status == TimeTokenStatus.PENDING, "WRONG_STATUS");
-        _timeTokens[tokenId].status = TimeTokenStatus.REJECTED;
-        // do refund
-        payable(tokenOwner).transfer(timeToken.valueInWei);
+    function setRejected(uint256[] memory tokenIds) external {
+        for (uint256 i=0; i<tokenIds.length; ++i) {
+            uint256 tokenId = tokenIds[i];
+            address tokenOwner = IMuseTime(museTimeNFT).ownerOf(tokenId);
+            TimeToken memory timeToken = _timeTokens[tokenId];
+            require(msg.sender == timeToken.topicOwner, "NOT_TOPIC_OWNER");
+            require(timeToken.status == TimeTokenStatus.PENDING, "WRONG_STATUS");
+            // update contract state
+            _timeTokens[tokenId].status = TimeTokenStatus.REJECTED;
+            payable(tokenOwner).transfer(timeToken.valueInWei); // do refund
+        }
     }
 
-    function setFulfilled(uint256 tokenId) external {
-        address tokenOwner = IMuseTime(museTimeNFT).ownerOf(tokenId);
-        TimeToken memory timeToken = _timeTokens[tokenId];
-        require(msg.sender == tokenOwner, "NOT_TOKEN_OWNER");
-        require(timeToken.status == TimeTokenStatus.CONFIRMED, "WRONG_STATUS");
-        _timeTokens[tokenId].status = TimeTokenStatus.FULFILLED;
-        // change balance
-        _timeTroves[timeToken.topicOwner].balance += timeToken.valueInWei;
-    }
-
-    function withdrawFromTimeTrove() external {
+    function withdrawFromTimeTrove() public {
         uint256 balance = _timeTroves[msg.sender].balance;
         require(balance > 0, "NO_BALANCE");
         _timeTroves[msg.sender].balance = 0;
@@ -178,16 +181,17 @@ contract MuseTimeController is OwnableUpgradeable {
 
     receive() external payable {}
 
-    function withdrawETH() external onlyOwner {
+    function withdrawETH(uint256 amount) external onlyOwner {
         uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
+        require(amount <= balance, 'NO_ENOUGH_BALANCE');
+        payable(msg.sender).transfer(amount);
     }
 
-    function withdrawERC20(IERC20 token) external onlyOwner {
+    function withdrawERC20(IERC20 token, uint256 amount) external onlyOwner {
         uint256 balance = token.balanceOf(address(this));
-        token.transfer(msg.sender, balance);
+        require(amount <= balance, 'NO_ENOUGH_BALANCE');
+        token.transfer(msg.sender, amount);
     }
-
 
     function setParamsSigner(address paramsSigner_) external onlyOwner {
         paramsSigner = paramsSigner_;
