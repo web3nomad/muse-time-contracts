@@ -104,7 +104,7 @@ contract MuseTimeController is OwnableUpgradeable {
         bytes32 topicId,
         address topicOwner,
         bytes memory signature
-    ) external payable {
+    ) external payable returns (uint256 tokenId) {
         require(block.number <= expired, "EXPIRED");
         require(valueInWei == msg.value, "INCORRECT_ETHER_VALUE");
         require(_timeTroves[topicOwner].arOwnerAddress != 0, 'TIME_TROVE_NOT_EXIST');
@@ -114,11 +114,10 @@ contract MuseTimeController is OwnableUpgradeable {
             paramsSigner
         );
         mintIndex += 1;
-        _timeTokens[mintIndex] = TimeToken(valueInWei, topicOwner, TimeTokenStatus.PENDING);
-        IMuseTime(museTimeNFT).mint(msg.sender, mintIndex);
-        emit TimeTokenMinted(
-            topicOwner, topicId, mintIndex,
-            msg.sender, profileArId, topicsArId);
+        tokenId = mintIndex;
+        _timeTokens[tokenId] = TimeToken(valueInWei, topicOwner, TimeTokenStatus.PENDING);
+        IMuseTime(museTimeNFT).mint(msg.sender, tokenId);
+        emit TimeTokenMinted(topicOwner, topicId, tokenId, msg.sender, profileArId, topicsArId);
     }
 
     function timeTokenOf(uint256 tokenId) external view returns (TimeToken memory) {
